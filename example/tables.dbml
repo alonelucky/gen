@@ -1,0 +1,5 @@
+Table t_employee as Employee {
+    id int [primary key]
+    raw json
+    created_on datetime [not null]
+}
