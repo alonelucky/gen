@@ -16,6 +16,7 @@ import (
 )
 
 var types = make(map[string]string)
+var enums = make(map[string]core.Enum)
 
 type Option func(*dbml)
 
@@ -45,6 +46,9 @@ func NewDBML(r io.Reader, g *gen.Generator, opts ...Option) *dbml {
 }
 
 func (s *dbml) All() (lst []interface{}) {
+	for _, v := range s.dbml.Enums {
+		enums[v.Name] = v
+	}
 	for _, v := range s.dbml.Tables {
 		mf := s.g.GenerateModelFrom(NewDBMLObject(v))
 		lst = append(lst, mf)
@@ -112,6 +116,10 @@ func (s *dbmlfield) Name() string {
 
 // Type return field type
 func (s *dbmlfield) Type() (typ string) {
+	if v := enums[s.Column.Type]; v.Name != "" {
+		return "string"
+	}
+
 	if typ = types[s.Column.Type]; typ != "" {
 		return
 	}
@@ -154,6 +162,9 @@ func (s *dbmlfield) ColumnName() string {
 // GORMTag return gorm tag
 func (s *dbmlfield) GORMTag() string {
 	var typ = []string{`type:` + s.Column.Type}
+	if v := enums[s.Column.Type]; v.Name != "" {
+		typ = []string{`type:varchar`}
+	}
 	if s.Column.Settings.PK {
 		typ = append(typ, "primaryKey")
 	}
